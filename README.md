@@ -1,9 +1,11 @@
 # Online Judge Platform — Scalable Architecture & Production Codebase
 
 > **Author**: Kuswanth Tumma  
-> **Repository**: [https://github.com/kuswanthtumma/online-judge-platform](https://github.com/kuswanthtumma/online-judge-platform)  
+> **GitHub Repository**: [https://github.com/kushal3698/online-judge-platform](https://github.com/kushal3698/online-judge-platform)  
+> **Live Web Application**: [https://online-judge-frontend-x36s.onrender.com](https://online-judge-frontend-x36s.onrender.com)  
+> **Live REST API**: [https://online-judge-platform-kz8u.onrender.com](https://online-judge-platform-kz8u.onrender.com)  
 > **Technology Stack**: React 18, Vite, Tailwind CSS, Monaco Editor, Express, TypeScript, MongoDB, Redis, BullMQ, Docker (cgroups v2 + seccomp)  
-> **Status**: Full-Stack Implemented & Verified  
+> **Status**: Full-Stack Implemented, Verified & Live on Render  
 
 ---
 
@@ -12,6 +14,17 @@
 The **Online Judge Platform** is a production-oriented distributed algorithmic evaluation system and AI-powered learning environment. It enables developers and competitive programmers to write solutions in **C++**, **Python 3**, and **Java**, execute code asynchronously in resource-constrained, hardened **Docker sandboxes**, and receive real-time verdicts with microsecond timing accuracy.
 
 The platform includes **🧞 OJ Genie**, a context-aware AI Coding Mentor embedded inside the problem workspace that offers **progressive hint scaffolding**, **line-by-line code breakdowns**, **submission autopsies**, **bug detection**, and **adversarial test generation**.
+
+---
+
+## 🌐 Live Production Deployment
+
+| Component | Live Production URL | Deployment Platform |
+| :--- | :--- | :--- |
+| **Frontend Web App** | **[`https://online-judge-frontend-x36s.onrender.com`](https://online-judge-frontend-x36s.onrender.com)** | Render (Static Site) |
+| **Backend REST API** | **[`https://online-judge-platform-kz8u.onrender.com`](https://online-judge-platform-kz8u.onrender.com)** | Render (Node.js Web Service) |
+| **API Health Check** | **[`https://online-judge-platform-kz8u.onrender.com/api/health/live`](https://online-judge-platform-kz8u.onrender.com/api/health/live)** | Container Liveness Probe |
+| **GitHub Repository**| **[`https://github.com/kushal3698/online-judge-platform`](https://github.com/kushal3698/online-judge-platform)** | Git Version Control |
 
 ---
 
@@ -139,13 +152,14 @@ d:/project HLD/
 │
 ├── pdf_export/                           # 7 Compiled PDF Documentation Files
 ├── docker-compose.yml                    # Multi-container orchestration (Mongo, Redis, API, Worker)
+├── render.yaml                           # 1-Click Render Cloud Deployment Blueprint
 ├── .env.example                          # Environment configuration template
 └── README.md                             # Platform Documentation
 ```
 
 ---
 
-## ⚡ Quick Start & Installation
+## ⚡ Quick Start & Local Setup
 
 ### Prerequisites
 - **Node.js**: v18.0.0 or higher
@@ -159,7 +173,7 @@ d:/project HLD/
 #### 1. Clone & Install Dependencies
 ```bash
 # Clone the repository
-git clone https://github.com/kuswanthtumma/online-judge-platform.git
+git clone https://github.com/kushal3698/online-judge-platform.git
 cd online-judge-platform
 
 # Install Backend Dependencies
@@ -211,17 +225,6 @@ npm run dev
 cd worker
 npm run dev
 ```
-
----
-
-## 🌐 Live Service Endpoints
-
-| Component | URL | Description |
-| :--- | :--- | :--- |
-| **Frontend Web App** | `http://localhost:3000` | Problem set, Monaco Editor, Genie AI |
-| **Backend REST API** | `http://localhost:5000/api` | Problem CRUD, Auth, Submissions, Leaderboard |
-| **Health Live Probe** | `http://localhost:5000/api/health/live` | Container liveness check |
-| **Health Ready Probe**| `http://localhost:5000/api/health/ready` | Database readiness check |
 
 ---
 
