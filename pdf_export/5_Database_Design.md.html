@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>5_Database_Design.md</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 20pt; color: #0052cc; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 25px; }
+        h2 { font-size: 14pt; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 4px; margin-top: 20px; }
+        h3 { font-size: 12pt; color: #2b6cb0; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9.5pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #cbd5e0; padding: 7px 10px; text-align: left; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+        pre { background-color: #1a202c; color: #f7fafc; padding: 12px; border-radius: 6px; font-size: 9pt; white-space: pre-wrap; word-break: break-all; margin: 12px 0; page-break-inside: avoid; }
+        code { background-color: #edf2f7; color: #c53030; padding: 2px 5px; border-radius: 4px; font-size: 9pt; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        .alert { background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin: 14px 0; border-radius: 0 4px 4px 0; font-size: 9.5pt; }
+        .alert-title { font-weight: bold; color: #2b6cb0; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 30px; border-bottom: 3px solid #0052cc; padding-bottom: 10px;">
+        <div style="font-size: 22pt; font-weight: bold; color: #0052cc;">Online Judge Platform</div>
+        <div style="font-size: 12pt; color: #4a5568;">Prepared By: Kuswanth Tumma</div>
+    </div>
+    <h1>Database Design & Modeling Specification</h1>
+<h2>Online Judge Platform — MongoDB Document Architecture</h2>
+<hr>
+<p>| Document Metadata | Details |</p>
+<p>| :--- | :--- |</p>
+<p>| <strong>Project Title</strong> | Online Judge Platform |</p>
+<p>| <strong>Database System</strong> | MongoDB v6.0+ Enterprise / Atlas |</p>
+<p>| <strong>Document Version</strong> | 1.0.0-RELEASE |</p>
+<p>| <strong>Status</strong> | Approved for Production |</p>
+<p>| <strong>Author</strong> | <strong>Kuswanth Tumma</strong> |</p>
+<p>| <strong>Date</strong> | July 2026 |</p>
+<hr>
+<h2>1. Data Store Selection Rationale & Trade-off Analysis</h2>
+<p>Choosing an appropriate database engine is critical for an Online Judge. The decision between a Relational Store (PostgreSQL) and a Document Store (MongoDB) was evaluated based on workload characteristics:</p>
+<pre><code>+-------------------------------------------------------------------------+
+|                  DATABASE ARCHITECTURAL COMPARISON MATRIX               |
++-------------------------------------------------------------------------+
+| Characteristic          | PostgreSQL (Relational) | MongoDB (Document)   |
++-------------------------+-------------------------+---------------------+
+| Testcase Inputs/Outputs | Normalization overhead  | Embedded / Document |
+| Problem Schema Flexibility| DDL migration cost    | Schema-less / Dynamic|
+| Write Throughput (Submits)| High lock contention    | High append throughput|
+| Leaderboard Aggregation | SQL <code>GROUP BY</code> heavy    | Aggregation Pipeline |
++-------------------------------------------------------------------------+</code></pre>
+<p><strong>Decision</strong>: <strong>MongoDB</strong> was selected due to its high write throughput for rapid code submission logs, dynamic schema adaptation for evolving problem statement metadata, and native JSON array embedding for testcase definitions.</p>
+<hr>
+<h2>2. Entity Relationship (ER) Diagram</h2>
+<p>The logical relationships between platform domain entities are illustrated in the Mermaid ER diagram below:</p>
+<pre><code>erDiagram
+    USERS ||--o{ SUBMISSIONS : "submits"
+    USERS ||--o{ PROBLEMS : "creates (Admin)"
+    PROBLEMS ||--o{ TESTCASES : "contains"
+    PROBLEMS ||--o{ SUBMISSIONS : "evaluates"
+    USERS ||--o| LEADERBOARDS : "ranks"
+
+    USERS {
+        ObjectId _id PK
+        string name
+        string email UK
+        string passwordHash
+        string role
+        number problemsSolved
+        number totalSubmissions
+        date createdAt
+    }
+
+    PROBLEMS {
+        ObjectId _id PK
+        string title
+        string slug UK
+        string statement
+        string difficulty
+        object constraints
+        string sampleInput
+        string sampleOutput
+        ObjectId createdBy FK
+        date createdAt
+    }
+
+    TESTCASES {
+        ObjectId _id PK
+        ObjectId problemId FK
+        string input
+        string expectedOutput
+        boolean isHidden
+        number order
+    }
+
+    SUBMISSIONS {
+        ObjectId _id PK
+        ObjectId userId FK
+        ObjectId problemId FK
+        string language
+        string sourceCode
+        string verdict
+        number executionTimeMs
+        number memoryUsedKb
+        string errorMessage
+        date submittedAt
+    }
+
+    LEADERBOARDS {
+        ObjectId _id PK
+        ObjectId userId FK UK
+        number rank
+        number problemsSolved
+        number totalSubmissions
+        number accuracy
+        date updatedAt
+    }</code></pre>
+<hr>
+<h2>3. Detailed MongoDB Collections Specification</h2>
+<h3>3.1 <code>users</code> Collection Schema</h3>
+<pre><code>{
+  "_id": { "$type": "objectId" },
+  "name": { "$type": "string", "maxLength": 100 },
+  "email": { "$type": "string", "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$" },
+  "passwordHash": { "$type": "string" },
+  "role": { "$enum": ["User", "Admin"] },
+  "problemsSolved": { "$type": "int", "minimum": 0 },
+  "totalSubmissions": { "$type": "int", "minimum": 0 },
+  "createdAt": { "$type": "date" },
+  "updatedAt": { "$type": "date" }
+}</code></pre>
+<h3>3.2 <code>problems</code> Collection Schema</h3>
+<pre><code>{
+  "_id": { "$type": "objectId" },
+  "title": { "$type": "string", "maxLength": 150 },
+  "slug": { "$type": "string" },
+  "statement": { "$type": "string" },
+  "difficulty": { "$enum": ["Easy", "Medium", "Hard"] },
+  "constraints": {
+    "timeLimitMs": { "$type": "int", "default": 1000 },
+    "memoryLimitMb": { "$type": "int", "default": 256 }
+  },
+  "sampleInput": { "$type": "string" },
+  "sampleOutput": { "$type": "string" },
+  "createdBy": { "$type": "objectId" },
+  "createdAt": { "$type": "date" },
+  "updatedAt": { "$type": "date" }
+}</code></pre>
+<h3>3.3 <code>testcases</code> Collection Schema</h3>
+<pre><code>{
+  "_id": { "$type": "objectId" },
+  "problemId": { "$type": "objectId" },
+  "input": { "$type": "string" },
+  "expectedOutput": { "$type": "string" },
+  "isHidden": { "$type": "bool", "default": true },
+  "order": { "$type": "int" }
+}</code></pre>
+<h3>3.4 <code>submissions</code> Collection Schema</h3>
+<pre><code>{
+  "_id": { "$type": "objectId" },
+  "userId": { "$type": "objectId" },
+  "problemId": { "$type": "objectId" },
+  "language": { "$enum": ["cpp", "python", "java"] },
+  "sourceCode": { "$type": "string", "maxLength": 65536 },
+  "verdict": { "$enum": ["Pending", "Processing", "Accepted", "Wrong Answer", "Time Limit Exceeded", "Memory Limit Exceeded", "Runtime Error", "Compilation Error"] },
+  "executionTimeMs": { "$type": "int" },
+  "memoryUsedKb": { "$type": "int" },
+  "errorMessage": { "$type": "string" },
+  "submittedAt": { "$type": "date" }
+}</code></pre>
+<hr>
+<h2>4. Indexing & Query Execution Strategy</h2>
+<p>To maintain sub-150ms query response times under high read/write volume, the collection indexes defined below are created:</p>
+<p>| Collection | Index Name | Key Fields | Type / Option | Purpose |</p>
+<p>| :--- | :--- | :--- | :--- | :--- |</p>
+<p>| <code>users</code> | <code>idx_users_email</code> | <code>{ email: 1 }</code> | Unique | Instant user auth lookup. |</p>
+<p>| <code>problems</code> | <code>idx_problems_slug</code> | <code>{ slug: 1 }</code> | Unique | Fast problem page loading by URL slug. |</p>
+<p>| <code>problems</code> | <code>idx_problems_diff</code> | <code>{ difficulty: 1 }</code> | Standard | Filtering problem list by difficulty. |</p>
+<p>| <code>testcases</code> | <code>idx_testcases_pid</code> | <code>{ problemId: 1, order: 1 }</code> | Compound | Fast retrieval of evaluation testcases. |</p>
+<p>| <code>submissions</code> | <code>idx_sub_user_hist</code> | <code>{ userId: 1, submittedAt: -1 }</code> | Compound | User submission history timeline queries. |</p>
+<p>| <code>submissions</code> | <code>idx_sub_verdict</code> | <code>{ problemId: 1, verdict: 1 }</code> | Compound | Problem statistics & acceptance rate calculation. |</p>
+<p>| <code>leaderboards</code>| <code>idx_leaderboard</code> | <code>{ problemsSolved: -1, accuracy: -1 }</code> | Compound | Fast global leaderboard ordering. |</p>
+<hr>
+<h2>5. Database Replication, Sharding & Backup Policies</h2>
+<pre><code>                        +------------------------------------+
+                        |  MongoDB Sharded Cluster Topology  |
+                        +-----------------+------------------+
+                                          |
+                                 +--------+--------+
+                                 |                 |
+                                 v                 v
+                    +--------------------+ +--------------------+
+                    | Shard 1 (User/Prob)| | Shard 2 (Submits)  |
+                    | Primary + 2 Sec    | | Primary + 2 Sec    |
+                    +--------------------+ +--------------------+</code></pre>
+<p>1. <strong>Replication Strategy</strong>: Primary-Secondary-Secondary replica set topology across separate Cloud Availability Zones (AZs) guarantees 99.999% data durability.</p>
+<p>2. <strong>Sharding Strategy</strong>: The <code>submissions</code> collection is sharded using hashed sharding on <code>userId</code> (<code>{ userId: "hashed" }</code>), distributing high write volumes across multiple database nodes.</p>
+<p>3. <strong>Backup Policy</strong>: Automated daily continuous snapshot backups with point-in-time recovery (PITR) retention for 30 days.</p>
+</body>
+</html>

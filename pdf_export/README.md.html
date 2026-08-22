@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>README.md</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 20pt; color: #0052cc; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 25px; }
+        h2 { font-size: 14pt; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 4px; margin-top: 20px; }
+        h3 { font-size: 12pt; color: #2b6cb0; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9.5pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #cbd5e0; padding: 7px 10px; text-align: left; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+        pre { background-color: #1a202c; color: #f7fafc; padding: 12px; border-radius: 6px; font-size: 9pt; white-space: pre-wrap; word-break: break-all; margin: 12px 0; page-break-inside: avoid; }
+        code { background-color: #edf2f7; color: #c53030; padding: 2px 5px; border-radius: 4px; font-size: 9pt; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        .alert { background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin: 14px 0; border-radius: 0 4px 4px 0; font-size: 9.5pt; }
+        .alert-title { font-weight: bold; color: #2b6cb0; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 30px; border-bottom: 3px solid #0052cc; padding-bottom: 10px;">
+        <div style="font-size: 22pt; font-weight: bold; color: #0052cc;">Online Judge Platform</div>
+        <div style="font-size: 12pt; color: #4a5568;">Prepared By: Kuswanth Tumma</div>
+    </div>
+    <h1>🚀 Online Judge Platform — Architectural & Design Blueprint</h1>
+<p>[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)</p>
+<p>[![Node.js](https://img.shields.io/badge/Node.js-v18.x+-green.svg)](https://nodejs.org/)</p>
+<p>[![React](https://img.shields.io/badge/React-v18.x-blue.svg)](https://reactjs.org/)</p>
+<p>[![MongoDB](https://img.shields.io/badge/MongoDB-v6.0+-green.svg)](https://www.mongodb.com/)</p>
+<p>[![Redis](https://img.shields.io/badge/Redis-v7.0+-red.svg)](https://redis.io/)</p>
+<p>[![Docker](https://img.shields.io/badge/Docker-v24.0+-blue.svg)](https://www.docker.com/)</p>
+<p>A scalable <strong>Online Judge Platform</strong> designed with production-oriented architectural principles. The system provides automated code execution, secure container sandboxing, hidden test case evaluation, and real-time user rankings.</p>
+<p><strong>Prepared By</strong>: <strong>Kuswanth Tumma</strong></p>
+<hr>
+<h2>📌 Table of Contents</h2>
+<li>[System Architecture Summary](#-system-architecture-summary)</li>
+<li>[Key Architectural Capabilities](#-key-architectural-capabilities)</li>
+<li>[Technology Stack](#-technology-stack)</li>
+<li>[Repository Folder Structure](#-repository-folder-structure)</li>
+<li>[Documentation Suite](#-documentation-suite)</li>
+<li>[Architectural Design Q&A / Review Defense Guide](#-architectural-design-qa--review-defense-guide)</li>
+<li>[Getting Started & Local Setup](#-getting-started--local-setup)</li>
+<li>[License](#-license)</li>
+<hr>
+<h2>🏗️ System Architecture Summary</h2>
+<p>The architecture decouples HTTP API request handling from compute-heavy code compilation and evaluation using an asynchronous queue pattern powered by <strong>Redis and BullMQ</strong>. Untrusted user code is designed to execute inside ephemeral, non-root <strong>Docker containers</strong> hardened with <strong>Linux cgroups v2</strong> (CPU/Memory limits), <strong>seccomp</strong> profiles (system call filtering), read-only root filesystems, and disabled network interfaces.</p>
+<pre><code>                  +-----------------------+
+                  |    React Frontend     |
+                  +-----------+-----------+
+                              | HTTPS (REST API / JWT)
+                              v
+                  +-----------------------+
+                  |   Nginx Reverse Proxy |
+                  +-----------+-----------+
+                              |
+                              v
+                  +-----------------------+
+                  |   Express API Gateway |
+                  +-----+-----------+-----+
+                        |           |
+     +------------------+           +------------------+
+     | Persistence                                     | Async Job Queue
+     v                                                 v
++----+-------------+                         +---------+--------+
+| MongoDB Cluster  |                         |  Redis + BullMQ  |
++------------------+                         +---------+--------+
+                                                       |
+                                                       v Dequeue Job
+                                             +---------+--------+
+                                             | Worker Pool Node |
+                                             +---------+--------+
+                                                       | Spawns
+                                                       v
+                                             +---------+--------+
+                                             | Hardened Docker  |
+                                             | Execution Engine |
+                                             +------------------+</code></pre>
+<hr>
+<h2>✨ Key Architectural Capabilities</h2>
+<p>The architecture is designed to support:</p>
+<li><strong>🔒 Secure JWT & RBAC Authentication</strong>: Role-based access control separating regular coders from platform administrators.</li>
+<li><strong>⚡ Asynchronous Code Execution</strong>: Non-blocking job queues that handle bursty submission traffic without freezing API gateway instances.</li>
+<li><strong>🐳 Hardened Docker Sandboxing</strong>: Ephemeral container environments isolated using custom <code>seccomp</code> system call filters, CPU/Memory cgroup limits, read-only root filesystems, and disabled network access.</li>
+<li><strong>📊 Real-time Leaderboards & Submission History</strong>: Efficient query execution for user submission audit logs, accuracy statistics, and global rankings.</li>
+<li><strong>🧪 Hidden Test Case Evaluation</strong>: Multi-testcase evaluation delivering standard verdicts (<code>Accepted</code>, <code>Wrong Answer</code>, <code>Time Limit Exceeded</code>, <code>Memory Limit Exceeded</code>, <code>Runtime Error</code>, <code>Compilation Error</code>).</li>
+<hr>
+<h2>🛠️ Technology Stack</h2>
+<p>| Component | Technology | Rationale |</p>
+<p>| :--- | :--- | :--- |</p>
+<p>| <strong>Frontend</strong> | React 18, Vite, Tailwind CSS | Modern SPA architecture with fast Vite HMR bundling and Monaco Editor integration. |</p>
+<p>| <strong>Backend API</strong> | Node.js, Express.js (TypeScript) | Non-blocking event loop provides high throughput for I/O bound routing with minimal overhead. |</p>
+<p>| <strong>Job Queue</strong> | Redis, BullMQ | In-memory speed. BullMQ handles retries, concurrency limits, and job state events natively. |</p>
+<p>| <strong>Database</strong> | MongoDB, Mongoose | Schema flexibility for dynamic testcases and high write throughput for submission logs. |</p>
+<p>| <strong>Execution Engine</strong>| Docker, Linux cgroups, seccomp | OS-level container isolation for untrusted code execution. |</p>
+<p>| <strong>Reverse Proxy</strong> | Nginx | SSL termination, rate limiting, and HTTP request routing. |</p>
+<hr>
+<h2>📁 Repository Folder Structure</h2>
+<pre><code>online-judge/
+├── frontend/                             # React SPA Client
+│   ├── src/
+│   │   ├── components/                   # UI Components (Editor, Tables, Cards)
+│   │   ├── pages/                        # Views (Home, ProblemDetail, Leaderboard)
+│   │   ├── services/                     # API Client (Axios)
+│   │   └── App.jsx                       # Root Route Setup
+│   └── package.json
+│
+├── backend/                              # Express REST API Server
+│   ├── src/
+│   │   ├── controllers/                  # Route Controllers (Auth, Problem, Submission)
+│   │   ├── middleware/                   # JWT Auth, RBAC Guard, Rate Limiter
+│   │   ├── models/                       # Mongoose Schemas (User, Problem, Submission)
+│   │   ├── routes/                       # Express Route Definitions
+│   │   ├── services/                     # Business Logic Services
+│   │   └── server.ts                     # API Gateway Entry Point
+│   └── package.json
+│
+├── worker/                               # Asynchronous Queue Worker Node
+│   ├── src/
+│   │   ├── docker/                       # Docker Container Orchestrator
+│   │   ├── evaluator/                    # Output Diffing &amp; Verdict Engine
+│   │   └── worker.ts                     # BullMQ Queue Processor Loop
+│   └── package.json
+│
+├── docker/                               # Execution Sandbox Dockerfiles &amp; Profiles
+│   ├── cpp/Dockerfile                    # GCC Execution Environment
+│   ├── python/Dockerfile                 # Python 3 execution sandbox
+│   └── seccomp.json                      # Hardened Linux System Call Profile
+│
+├── docs/                                 # Architectural &amp; Engineering Documentation
+│   ├── 1_High_Level_Design.md            # Primary HLD Blueprint (Main Deliverable)
+│   ├── 2_Low_Level_Design.md             # Low-Level MVC &amp; Schemas
+│   ├── 3_Software_Requirement_Specification.md # IEEE 830 Format SRS
+│   ├── 4_API_Documentation.md            # OpenAPI 3.0 API Reference
+│   ├── 5_Database_Design.md             # Database ERD &amp; Indexing Strategy
+│   └── 6_System_Diagrams.md             # 11+ Mermaid System Diagrams
+│
+├── docker-compose.yml                    # Local Development Deployment Setup
+└── README.md                             # Repository Blueprint Overview</code></pre>
+<hr>
+<h2>📖 Documentation Suite</h2>
+<p>The complete engineering documentation package is located in the <code>docs/</code> directory:</p>
+<p>1. 📄 <strong>[High-Level Design (HLD) Blueprint](docs/1_High_Level_Design.md)</strong> *(Main Submission Deliverable)*: A polished 10–15 page design blueprint covering system objectives, requirements, architecture, technology selection rationale, database schemas, REST APIs, Docker sandboxing, risk analysis, and future scope.</p>
+<p>2. 📄 <strong>[Low-Level Design (LLD)](docs/2_Low_Level_Design.md)</strong> *(Supporting)*: Class definitions, Mongoose schemas, controller interfaces, and worker execution logic.</p>
+<p>3. 📄 <strong>[Software Requirement Specification (SRS)](docs/3_Software_Requirement_Specification.md)</strong> *(Supporting)*: IEEE 830 specification listing all functional & non-functional requirements.</p>
+<p>4. 📄 <strong>[API Documentation](docs/4_API_Documentation.md)</strong> *(Supporting)*: OpenAPI 3.0 endpoints, authentication headers, request bodies, and error formats.</p>
+<p>5. 📄 <strong>[Database Design](docs/5_Database_Design.md)</strong> *(Supporting)*: ER diagrams, MongoDB collections, indexes, and sharding strategies.</p>
+<p>6. 📄 <strong>[System Diagrams](docs/6_System_Diagrams.md)</strong> *(Supporting)*: Mermaid diagrams covering Architecture, Sequence, Deployment, Class, Use Case, and Sandbox Isolation.</p>
+<hr>
+<h2>🧠 Architectural Design Q&A / Review Defense Guide</h2>
+<p>Use this section to confidently explain your design decisions during a review:</p>
+<h3>Q1: Why did you choose asynchronous execution (Redis + BullMQ) over synchronous execution?</h3>
+<div class="alert"><div class="alert-title">Note</div><strong>Answer</strong>: Code evaluation involves compilation and running against multiple test cases, which can take several seconds. If handled synchronously in an Express API request handler, API threads would block waiting for code execution, leading to HTTP timeouts and thread pool exhaustion during traffic spikes. Using Redis + BullMQ decouples request ingestion (instant 202 Accepted response) from processing, ensuring high API availability and smooth queue distribution.</div>
+<h3>Q2: How does the worker process communicate with Docker?</h3>
+<div class="alert"><div class="alert-title">Note</div><strong>Answer</strong>: The worker process runs on a Node.js runtime with access to the local Docker daemon socket (or Docker Engine CLI bindings). When a job is dequeued, the worker writes the code to a temporary directory <code>/tmp/sandbox_<id></code> and spawns a child process running <code>docker run</code> with volume mounts (<code>-v /tmp/sandbox_<id>:/sandbox:ro</code>) and security flags (<code>--network none</code>, <code>--memory 256m</code>, <code>--security-opt profile=seccomp.json</code>).</div>
+<h3>Q3: Why did you choose Nginx as a reverse proxy?</h3>
+<div class="alert"><div class="alert-title">Note</div><strong>Answer</strong>: Nginx acts as a single entry point providing SSL/TLS termination, static file caching for the React SPA, IP-based rate limiting, and HTTP load balancing across API instances, keeping application servers focused purely on business logic.</div>
+<h3>Q4: How do cgroups and seccomp protect the host system?</h3>
+<div class="alert"><div class="alert-title">Note</div><strong>Answer</strong>: <strong>cgroups (Control Groups)</strong> limit physical hardware access (capping RAM to 256 MB and PIDs to 64 to prevent memory leaks and fork bombs). <strong>seccomp (Secure Computing Mode)</strong> filters kernel system calls, blocking untrusted code from invoking dangerous syscalls like <code>execve</code>, <code>socket</code>, or <code>ptrace</code>.</div>
+<hr>
+<h2>🚀 Getting Started & Local Setup</h2>
+<h3>Quickstart with Docker Compose</h3>
+<p>1. <strong>Clone the repository</strong>:</p>
+<p>   <code></code>`bash</p>
+<p>   git clone <repository-url></p>
+<p>   cd online-judge</p>
+<p>   <code></code>`</p>
+<p>2. <strong>Configure Environment</strong>:</p>
+<p>   Create a <code>.env</code> file in the root directory:</p>
+<p>   <code></code>`env</p>
+<p>   PORT=5000</p>
+<p>   MONGO_URI=mongodb://localhost:27017/online_judge</p>
+<p>   REDIS_HOST=localhost</p>
+<p>   REDIS_PORT=6379</p>
+<p>   JWT_SECRET=your_jwt_secret_key_here</p>
+<p>   <code></code>`</p>
+<p>3. <strong>Launch Local Environment</strong>:</p>
+<p>   <code></code>`bash</p>
+<p>   docker-compose up --build -d</p>
+<p>   <code></code>`</p>
+<hr>
+<h2>📄 License</h2>
+<p>This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.</p>
+</body>
+</html>

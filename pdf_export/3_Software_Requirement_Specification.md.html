@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3_Software_Requirement_Specification.md</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 20pt; color: #0052cc; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 25px; }
+        h2 { font-size: 14pt; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 4px; margin-top: 20px; }
+        h3 { font-size: 12pt; color: #2b6cb0; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9.5pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #cbd5e0; padding: 7px 10px; text-align: left; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+        pre { background-color: #1a202c; color: #f7fafc; padding: 12px; border-radius: 6px; font-size: 9pt; white-space: pre-wrap; word-break: break-all; margin: 12px 0; page-break-inside: avoid; }
+        code { background-color: #edf2f7; color: #c53030; padding: 2px 5px; border-radius: 4px; font-size: 9pt; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        .alert { background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin: 14px 0; border-radius: 0 4px 4px 0; font-size: 9.5pt; }
+        .alert-title { font-weight: bold; color: #2b6cb0; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 30px; border-bottom: 3px solid #0052cc; padding-bottom: 10px;">
+        <div style="font-size: 22pt; font-weight: bold; color: #0052cc;">Online Judge Platform</div>
+        <div style="font-size: 12pt; color: #4a5568;">Prepared By: Kuswanth Tumma</div>
+    </div>
+    <h1>Software Requirement Specification (SRS)</h1>
+<h2>Online Judge Platform — IEEE Std 830-1998 Standard</h2>
+<hr>
+<p>| Document Metadata | Details |</p>
+<p>| :--- | :--- |</p>
+<p>| <strong>Project Title</strong> | Online Judge Platform |</p>
+<p>| <strong>Document Standard</strong> | IEEE Std 830-1998 Compliant |</p>
+<p>| <strong>Document Version</strong> | 1.0.0-RELEASE |</p>
+<p>| <strong>Status</strong> | Formally Approved |</p>
+<p>| <strong>Author</strong> | <strong>Kuswanth Tumma</strong> |</p>
+<p>| <strong>Date</strong> | July 2026 |</p>
+<hr>
+<h2>1. Introduction</h2>
+<h3>1.1 Purpose</h3>
+<p>This Software Requirement Specification (SRS) document defines the complete functional, non-functional, and system interface requirements for the <strong>Online Judge Platform</strong>. It serves as the formal baseline agreement between stakeholders, product owners, system architects, and development teams.</p>
+<h3>1.2 Scope</h3>
+<p>The Online Judge Platform is a web-based automated system that allows registered software engineers and students to read algorithmic problem statements, compose solutions in C++, Java, or Python, and submit their code for automated execution against hidden test suites. The platform handles user authentication, problem administration, asynchronous job execution, containerized sandbox evaluation, submission logging, and global leaderboard calculation.</p>
+<h3>1.3 Definitions, Acronyms, and Abbreviations</h3>
+<li><strong>AC</strong>: Accepted (All test cases passed cleanly within constraints).</li>
+<li><strong>WA</strong>: Wrong Answer (Output produced did not match expected testcase output).</li>
+<li><strong>TLE</strong>: Time Limit Exceeded (Execution exceeded specified milliseconds CPU limit).</li>
+<li><strong>MLE</strong>: Memory Limit Exceeded (Execution exceeded specified MB RAM limit).</li>
+<li><strong>RTE</strong>: Runtime Error (Division by zero, segmentation fault, or uncaught exception).</li>
+<li><strong>CE</strong>: Compilation Error (Syntax or linker error during build phase).</li>
+<li><strong>JWT</strong>: JSON Web Token.</li>
+<li><strong>RBAC</strong>: Role-Based Access Control.</li>
+<li><strong>cgroups</strong>: Linux Kernel Control Groups for resource limits.</li>
+<li><strong>seccomp</strong>: Linux Kernel Secure Computing Mode system call restriction.</li>
+<h3>1.4 References</h3>
+<li>IEEE Std 830-1998, *IEEE Recommended Practice for Software Requirements Specifications*.</li>
+<li>ISO/IEC 27001 Security Standard for Information Technology.</li>
+<li>OpenAPI 3.0 Specification Standard.</li>
+<h3>1.5 Overview</h3>
+<p>The remainder of this document details overall system descriptions, user characteristics, specific functional specifications (categorized by module), non-functional performance benchmarks, and validation acceptance criteria.</p>
+<hr>
+<h2>2. Overall Description</h2>
+<h3>2.1 Product Perspective</h3>
+<p>The Online Judge Platform operates as an autonomous multi-tier web system. It relies on a React-based client layer, an Express REST API backend, a Redis message queue for job distribution, a MongoDB instance for persistent state, and Docker engines for code execution.</p>
+<pre><code>+------------------------------------------------------------------------+
+|                      ONLINE JUDGE PRODUCT PERSPECTIVE                  |
++------------------------------------------------------------------------+
+|                                                                        |
+|  [ User Web Browser ] &lt;--&gt; [ Nginx Reverse Proxy / Load Balancer ]      |
+|                                       |                                |
+|                                       v                                |
+|                           [ Node.js Express REST API ]                 |
+|                                  |          |                          |
+|             +--------------------+          +--------------------+     |
+|             | Persistence                                        | Queue|
+|             v                                                    v     |
+|     [ MongoDB Database ]                                 [ Redis BullMQ]
+|                                                                  |     |
+|                                                                  v     |
+|                                                       [ Worker Execution ]
+|                                                                  |     |
+|                                                                  v     |
+|                                                       [ Hardened Docker ]
++------------------------------------------------------------------------+</code></pre>
+<h3>2.2 Product Functions</h3>
+<li>User registration, authentication, and session token renewal.</li>
+<li>Browse, search, and filter problem statements by difficulty and tags.</li>
+<li>Code editor interface supporting syntax highlighting for C++, Python, and Java.</li>
+<li>Asynchronous solution execution against concealed test cases.</li>
+<li>Real-time verdict delivery with execution time (ms) and peak memory metrics.</li>
+<li>Administrator management of problems, test cases, time limits, and user roles.</li>
+<li>Global leaderboard computing rankings based on solved counts and submit ratios.</li>
+<h3>2.3 User Classes and Characteristics</h3>
+<p>1. <strong>Regular User / Candidate</strong>: Uses the platform to practice coding, submit solutions, track submission history, and view leaderboards. Requires intuitive UI and rapid feedback.</p>
+<p>2. <strong>System Administrator / Creator</strong>: Technical user responsible for creating problem statements, managing hidden testcase suites, adjusting constraints, and moderating user accounts.</p>
+<p>3. <strong>Automated Worker System</strong>: Unattended background process reading queued execution requests, executing Docker sandboxes, and writing verdict logs.</p>
+<h3>2.4 Operating Environment</h3>
+<li><strong>Server OS</strong>: Linux (Ubuntu 22.04 LTS / Debian 12 64-bit recommended for native cgroups v2 support).</li>
+<li><strong>Runtime Engines</strong>: Node.js v18.x+, Docker Engine v24.0+, Redis 7.0+, MongoDB 6.0+.</li>
+<li><strong>Client Browsers</strong>: Modern web browsers supporting ES6 JavaScript (Chrome 100+, Firefox 100+, Safari 15+, Edge 100+).</li>
+<h3>2.5 Design and Implementation Constraints</h3>
+<li><strong>Security Constraint</strong>: Arbitrary code execution must be completely isolated from host OS privileges.</li>
+<li><strong>Language Compatibility</strong>: Must support GCC 11+ (C++17/20), Python 3.10+, and OpenJDK 17+.</li>
+<li><strong>NoSQL Schema Constraint</strong>: Data models must handle dynamic arrays of testcases without performance degradation.</li>
+<hr>
+<h2>3. Specific Requirements</h2>
+<h3>3.1 External Interface Requirements</h3>
+<h4>3.1.1 User Interfaces</h4>
+<li>Responsive web UI built with React and Tailwind CSS.</li>
+<li>Code Editor component integrated with Monaco Editor supporting line numbers, auto-indentation, and syntax highlighting.</li>
+<li>Modal dialogs displaying compilation errors and execution stack traces.</li>
+<h4>3.1.2 Hardware Interfaces</h4>
+<li>Multi-core x86_64 host CPU supporting hardware virtualization and cgroups v2.</li>
+<li>Minimum 8 GB RAM on Worker nodes to support parallel Docker container execution.</li>
+<h4>3.1.3 Software Interfaces</h4>
+<li><strong>Docker Engine API</strong>: Invoked via CLI bindings to create, execute, and destroy sandboxes.</li>
+<li><strong>MongoDB Driver</strong>: Mongoose ORM for database connection pooling and schema enforcement.</li>
+<h4>3.1.4 Communications Interfaces</h4>
+<li>Secure HTTPS communication using TLS 1.3 encryption.</li>
+<li>JSON data transfer format for REST API request and response payloads.</li>
+<hr>
+<h3>3.2 Detailed Functional Requirements</h3>
+<h4>Module 1: Authentication & Authorization</h4>
+<li><strong>FR-1.1</strong>: The system shall allow users to register with name, unique email, and password.</li>
+<li><strong>FR-1.2</strong>: Passwords must be hashed using <code>bcrypt</code> with a minimum salt factor of 12 prior to database storage.</li>
+<li><strong>FR-1.3</strong>: The system shall issue a signed JWT upon successful authentication.</li>
+<li><strong>FR-1.4</strong>: The system shall reject requests to restricted endpoints if the JWT is invalid or expired.</li>
+<h4>Module 2: Problem Management</h4>
+<li><strong>FR-2.1</strong>: System administrators shall be able to create, read, update, and soft-delete problems.</li>
+<li><strong>FR-2.2</strong>: Each problem record shall contain title, slug, statement text, difficulty rating, time limit (ms), and memory limit (MB).</li>
+<li><strong>FR-2.3</strong>: Regular users shall be able to search problems by keyword and filter by difficulty.</li>
+<h4>Module 3: Test Case Management</h4>
+<li><strong>FR-3.1</strong>: Administrators shall be able to upload multiple input/expected-output test pairs for any problem.</li>
+<li><strong>FR-3.2</strong>: The system shall distinguish between public sample test cases and hidden evaluation test cases.</li>
+<li><strong>FR-3.3</strong>: Hidden testcase outputs shall never be exposed to regular users in raw API responses.</li>
+<h4>Module 4: Code Submission & Queue Processing</h4>
+<li><strong>FR-4.1</strong>: Regular users shall submit source code up to 64 KB in size for any published problem.</li>
+<li><strong>FR-4.2</strong>: The system shall enqueue submission tasks into a Redis BullMQ queue and assign an initial state of <code>Pending</code>.</li>
+<li><strong>FR-4.3</strong>: Workers shall pull jobs concurrently and set status to <code>Processing</code>.</li>
+<h4>Module 5: Sandbox Execution & Verdict Evaluation</h4>
+<li><strong>FR-5.1</strong>: The system shall instantiate isolated Docker containers with non-root user privilege (<code>UID 10001</code>).</li>
+<li><strong>FR-5.2</strong>: The system shall enforce CPU quotas, memory limits, and disable network interfaces (<code>--network none</code>).</li>
+<li><strong>FR-5.3</strong>: The system shall compare program output against expected output using whitespace-trimmed diffing.</li>
+<li><strong>FR-5.4</strong>: The system shall compute one of six final verdicts: <code>AC</code>, <code>WA</code>, <code>TLE</code>, <code>MLE</code>, <code>RTE</code>, or <code>CE</code>.</li>
+<h4>Module 6: Leaderboard & History</h4>
+<li><strong>FR-6.1</strong>: The system shall maintain an immutable submission history per user.</li>
+<li><strong>FR-6.2</strong>: The system shall aggregate and publish a global leaderboard sorted by solved count and submit accuracy.</li>
+<hr>
+<h3>3.3 Non-Functional & System Performance Attributes</h3>
+<p>1. <strong>Response Time SLA</strong>: Non-submission REST endpoints must respond within 150 milliseconds for 95% of requests under nominal load.</p>
+<p>2. <strong>Evaluation Throughput</strong>: The worker pool must evaluate at least 1,000 code submissions per minute under auto-scaled worker node configurations.</p>
+<p>3. <strong>Availability</strong>: The platform must achieve 99.9% uptime per calendar month.</p>
+<p>4. <strong>Security & Data Isolation</strong>: Zero kernel leaks or unauthorized host read access from within Docker containers.</p>
+<hr>
+<h2>4. Verification & Validation Acceptance Criteria</h2>
+<p>| Requirement ID | Verification Method | Acceptance Test Criteria |</p>
+<p>| :--- | :--- | :--- |</p>
+<p>| <strong>FR-1.2</strong> | Automated Security Test | Inspect MongoDB document records to confirm passwords are stored as <code>$2b$12$...</code> bcrypt hashes. |</p>
+<p>| <strong>FR-4.1</strong> | Boundary Unit Test | Submit a 65 KB source code payload and verify HTTP 400 Bad Request error returned. |</p>
+<p>| <strong>FR-5.2</strong> | Penetration / Sandbox Test| Execute code attempting socket creation (<code>socket()</code>); verify system returns <code>Runtime Error</code> and network access fails. |</p>
+<p>| <strong>FR-5.3</strong> | Automated Diff Test | Execute code returning extra trailing spaces; verify output normalization evaluates verdict to <code>Accepted</code>. |</p>
+<p>| <strong>FR-5.4</strong> | Time Limit Test | Submit <code>while(true){}</code>; verify container is forcibly terminated after CPU limit + 1s and verdict equals <code>TLE</code>. |</p>
+</body>
+</html>

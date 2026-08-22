@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6_System_Diagrams.md</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 20pt; color: #0052cc; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 25px; }
+        h2 { font-size: 14pt; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 4px; margin-top: 20px; }
+        h3 { font-size: 12pt; color: #2b6cb0; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9.5pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #cbd5e0; padding: 7px 10px; text-align: left; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+        pre { background-color: #1a202c; color: #f7fafc; padding: 12px; border-radius: 6px; font-size: 9pt; white-space: pre-wrap; word-break: break-all; margin: 12px 0; page-break-inside: avoid; }
+        code { background-color: #edf2f7; color: #c53030; padding: 2px 5px; border-radius: 4px; font-size: 9pt; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        .alert { background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin: 14px 0; border-radius: 0 4px 4px 0; font-size: 9.5pt; }
+        .alert-title { font-weight: bold; color: #2b6cb0; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 30px; border-bottom: 3px solid #0052cc; padding-bottom: 10px;">
+        <div style="font-size: 22pt; font-weight: bold; color: #0052cc;">Online Judge Platform</div>
+        <div style="font-size: 12pt; color: #4a5568;">Prepared By: Kuswanth Tumma</div>
+    </div>
+    <h1>System Diagrams Package</h1>
+<h2>Online Judge Platform — Architectural & Workflow Visualizations</h2>
+<hr>
+<p>| Document Metadata | Details |</p>
+<p>| :--- | :--- |</p>
+<p>| <strong>Project Title</strong> | Online Judge Platform |</p>
+<p>| <strong>Diagram Engine</strong> | Native Mermaid JS Syntax |</p>
+<p>| <strong>Document Version</strong> | 1.0.0-RELEASE |</p>
+<p>| <strong>Status</strong> | Approved for Implementation |</p>
+<p>| <strong>Author</strong> | <strong>Kuswanth Tumma</strong> |</p>
+<p>| <strong>Date</strong> | July 2026 |</p>
+<hr>
+<h2>1. High-Level System Architecture Diagram</h2>
+<pre><code>graph TD
+    Client[React 18 SPA + Monaco Editor] --&gt;|HTTPS REST / WSS| Nginx[Nginx Reverse Proxy &amp; Load Balancer]
+    Nginx --&gt;|Proxy Pass| Express1[Express API Node 1]
+    Nginx --&gt;|Proxy Pass| Express2[Express API Node 2]
+
+    Express1 --&gt;|Read / Write| Mongo[(MongoDB Replica Set)]
+    Express2 --&gt;|Read / Write| Mongo
+
+    Express1 --&gt;|Enqueue Submission| Redis[(Redis + BullMQ Queue)]
+    Express2 --&gt;|Enqueue Submission| Redis
+
+    Redis --&gt;|Dequeue Job| Worker1[BullMQ Evaluation Worker 1]
+    Redis --&gt;|Dequeue Job| Worker2[BullMQ Evaluation Worker 2]
+
+    Worker1 --&gt;|Fetch Testcases| Mongo
+    Worker2 --&gt;|Fetch Testcases| Mongo
+
+    Worker1 --&gt;|Spawn Sandbox| Docker1[Ephemeral Docker Sandbox C++]
+    Worker2 --&gt;|Spawn Sandbox| Docker2[Ephemeral Docker Sandbox Python]
+
+    Docker1 --&gt;|Verdict &amp; Metrics| Worker1
+    Docker2 --&gt;|Verdict &amp; Metrics| Worker2
+
+    Worker1 --&gt;|Update Submission Status| Mongo
+    Worker2 --&gt;|Update Submission Status| Mongo</code></pre>
+<hr>
+<h2>2. System Use Case Diagram</h2>
+<pre><code>graph LR
+    subgraph Users
+        Candidate[Regular User]
+        AdminUser[System Administrator]
+    end
+
+    subgraph Online Judge Platform System Boundary
+        UC1(Register Account)
+        UC2(Login &amp; Receive JWT)
+        UC3(View &amp; Search Problems)
+        UC4(Submit Code Solution)
+        UC5(View Real-Time Verdict)
+        UC6(View Submission History)
+        UC7(View Leaderboard)
+        UC8(Create / Edit Problem)
+        UC9(Upload Hidden Testcases)
+        UC10(Manage User Roles)
+    end
+
+    Candidate --&gt; UC1
+    Candidate --&gt; UC2
+    Candidate --&gt; UC3
+    Candidate --&gt; UC4
+    Candidate --&gt; UC5
+    Candidate --&gt; UC6
+    Candidate --&gt; UC7
+
+    AdminUser --&gt; UC2
+    AdminUser --&gt; UC8
+    AdminUser --&gt; UC9
+    AdminUser --&gt; UC10</code></pre>
+<hr>
+<h2>3. UML Class Diagram</h2>
+<pre><code>classDiagram
+    class User {
+        +ObjectId id
+        +String name
+        +String email
+        +String passwordHash
+        +UserRole role
+        +Int problemsSolved
+        +Int totalSubmissions
+        +register()
+        +login()
+    }
+
+    class Problem {
+        +ObjectId id
+        +String title
+        +String slug
+        +String statement
+        +DifficultyLevel difficulty
+        +Object constraints
+        +String sampleInput
+        +String sampleOutput
+        +createProblem()
+        +updateConstraints()
+    }
+
+    class TestCase {
+        +ObjectId id
+        +ObjectId problemId
+        +String input
+        +String expectedOutput
+        +Boolean isHidden
+        +Int order
+    }
+
+    class Submission {
+        +ObjectId id
+        +ObjectId userId
+        +ObjectId problemId
+        +String language
+        +String sourceCode
+        +VerdictType verdict
+        +Int executionTimeMs
+        +Int memoryUsedKb
+        +evaluate()
+    }
+
+    class DockerExecutionService {
+        +spawnContainer()
+        +compileSource()
+        +runTestcase()
+        +harvestMetrics()
+    }
+
+    User "1" -- "*" Submission : submits
+    Problem "1" -- "*" TestCase : contains
+    Problem "1" -- "*" Submission : evaluated_by
+    Submission ..&gt; DockerExecutionService : processed_by</code></pre>
+<hr>
+<h2>4. System Component Diagram</h2>
+<pre><code>componentDiagram
+    package "Presentation Layer" {
+        [React Client Component]
+        [Monaco Code Editor]
+    }
+
+    package "API Gateway Layer" {
+        [Authentication Controller]
+        [Problem Controller]
+        [Submission Controller]
+        [JWT Middleware]
+    }
+
+    package "Async Messaging Layer" {
+        [Redis Instance]
+        [BullMQ Submission Queue]
+    }
+
+    package "Worker Compute Layer" {
+        [BullMQ Worker Loop]
+        [Docker Orchestrator Service]
+        [Diff Evaluator Engine]
+    }
+
+    package "Storage Layer" {
+        database "MongoDB Cluster"
+    }
+
+    [React Client Component] --&gt; [JWT Middleware]
+    [JWT Middleware] --&gt; [Submission Controller]
+    [Submission Controller] --&gt; [BullMQ Submission Queue]
+    [BullMQ Submission Queue] --&gt; [BullMQ Worker Loop]
+    [BullMQ Worker Loop] --&gt; [Docker Orchestrator Service]
+    [Docker Orchestrator Service] --&gt; [Diff Evaluator Engine]
+    [Diff Evaluator Engine] --&gt; [MongoDB Cluster]</code></pre>
+<hr>
+<h2>5. Production Infrastructure Deployment Diagram</h2>
+<pre><code>graph TB
+    subgraph Cloud Infrastructure AWS / GCP
+        subgraph Public Subnet
+            ALB[AWS Application Load Balancer]
+        end
+
+        subgraph Private App Subnet
+            API1[Express API Container 1]
+            API2[Express API Container 2]
+            Worker1[BullMQ Evaluation Worker 1]
+            Worker2[BullMQ Evaluation Worker 2]
+        end
+
+        subgraph Private Data Subnet
+            Redis[(Redis Enterprise Cluster)]
+            MongoPrimary[(MongoDB Primary)]
+            MongoSec1[(MongoDB Secondary 1)]
+            MongoSec2[(MongoDB Secondary 2)]
+        end
+    end
+
+    Internet[Internet Clients] --&gt;|HTTPS Port 443| ALB
+    ALB --&gt;|HTTP Port 5000| API1
+    ALB --&gt;|HTTP Port 5000| API2
+
+    API1 --&gt; Redis
+    API2 --&gt; Redis
+
+    Worker1 --&gt; Redis
+    Worker2 --&gt; Redis
+
+    API1 --&gt; MongoPrimary
+    API2 --&gt; MongoPrimary
+    Worker1 --&gt; MongoPrimary
+    Worker2 --&gt; MongoPrimary
+
+    MongoPrimary -.-&gt;|Replication| MongoSec1
+    MongoPrimary -.-&gt;|Replication| MongoSec2</code></pre>
+<hr>
+<h2>6. Code Submission & Async Verdict Sequence Diagram</h2>
+<pre><code>sequenceDiagram
+    autonumber
+    actor User as User Browser
+    participant API as Express API
+    participant DB as MongoDB
+    participant Queue as Redis (BullMQ)
+    participant Worker as Evaluation Worker
+    participant Docker as Docker Sandbox
+
+    User-&gt;&gt;API: POST /api/v1/submissions (code, lang, problemId)
+    API-&gt;&gt;API: Validate Request &amp; JWT
+    API-&gt;&gt;DB: Save Submission (Status: "Pending")
+    DB--&gt;&gt;API: Return submissionId
+    API-&gt;&gt;Queue: Push Job {submissionId, problemId, lang, code}
+    API--&gt;&gt;User: 202 Accepted {submissionId, status: "Pending"}
+
+    Queue-&gt;&gt;Worker: Dequeue Job Payload
+    Worker-&gt;&gt;DB: Update Status ("Processing")
+    Worker-&gt;&gt;DB: Fetch Hidden Testcases for problemId
+    DB--&gt;&gt;Worker: Return Array of Testcases
+
+    Worker-&gt;&gt;Docker: Spawn Sandbox Container (cgroups, seccomp, no-net)
+    activate Docker
+    Docker-&gt;&gt;Docker: Compile Code (if C++/Java)
+    loop For Each Testcase
+        Docker-&gt;&gt;Docker: Execute Program with Input
+        Docker--&gt;&gt;Worker: Return stdout, stderr, exitCode, time, memory
+        Worker-&gt;&gt;Worker: Compare stdout vs expectedOutput (DiffEvaluator)
+    end
+    deactivate Docker
+
+    Worker-&gt;&gt;DB: Save Final Verdict ("Accepted", timeMs, memoryKb)
+    Worker-&gt;&gt;Queue: Complete Job
+
+    loop Polling Status
+        User-&gt;&gt;API: GET /api/v1/submissions/:submissionId
+        API-&gt;&gt;DB: Query Submission Record
+        DB--&gt;&gt;API: Return Submission Record
+        API--&gt;&gt;User: 200 OK {verdict: "Accepted", executionTimeMs: 14}
+    end</code></pre>
+<hr>
+<h2>7. User Authentication & JWT Lifecycle Sequence Diagram</h2>
+<pre><code>sequenceDiagram
+    autonumber
+    actor Client as React Client
+    participant Router as Express Auth Router
+    participant Service as Auth Service
+    participant DB as MongoDB
+
+    Client-&gt;&gt;Router: POST /api/v1/auth/login {email, password}
+    Router-&gt;&gt;Service: authenticateUser(email, password)
+    Service-&gt;&gt;DB: findOne({email})
+    DB--&gt;&gt;Service: User Document with passwordHash
+    Service-&gt;&gt;Service: bcrypt.compare(password, passwordHash)
+
+    alt Invalid Credentials
+        Service--&gt;&gt;Router: Throw AuthError
+        Router--&gt;&gt;Client: 401 Unauthorized {error: "Invalid credentials"}
+    else Valid Credentials
+        Service-&gt;&gt;Service: jwt.sign({userId, role}, secret, {expiresIn: '24h'})
+        Service--&gt;&gt;Router: {token, userPayload}
+        Router--&gt;&gt;Client: 200 OK {token: "eyJhbG...", user: {...}}
+    end
+
+    Note over Client, Router: Subsequent Protected API Request
+    Client-&gt;&gt;Router: GET /api/v1/problems (Header: Bearer eyJhbG...)
+    Router-&gt;&gt;Router: authMiddleware() verifying JWT Signature
+    Router--&gt;&gt;Client: 200 OK {data: [problems]}</code></pre>
+<hr>
+<h2>8. Code Submission Activity & Evaluation Lifecycle</h2>
+<pre><code>stateDiagram-v2
+    [*] --&gt; Submitted: User clicks Submit
+
+    state Submitted {
+        [*] --&gt; Enqueued: Save to DB &amp; Enqueue to Redis
+        Enqueued --&gt; Processing: Dequeued by BullMQ Worker
+    }
+
+    state Processing {
+        [*] --&gt; Compiling: Language = C++ / Java
+        Compiling --&gt; CompilationError: Build fails
+        Compiling --&gt; Executing: Build succeeds
+
+        [*] --&gt; Executing: Language = Python
+
+        state Executing {
+            [*] --&gt; RunningTestcase
+            RunningTestcase --&gt; TimeLimitExceeded: time &gt; timeLimit
+            RunningTestcase --&gt; MemoryLimitExceeded: memory &gt; memoryLimit
+            RunningTestcase --&gt; RuntimeError: exitCode != 0
+            RunningTestcase --&gt; Diffing: Output captured
+            Diffing --&gt; WrongAnswer: Output mismatch
+            Diffing --&gt; NextTestcase: Output matched
+            NextTestcase --&gt; RunningTestcase: More testcases remain
+            NextTestcase --&gt; Accepted: All testcases passed
+        }
+    }
+
+    CompilationError --&gt; FinalVerdict
+    TimeLimitExceeded --&gt; FinalVerdict
+    MemoryLimitExceeded --&gt; FinalVerdict
+    RuntimeError --&gt; FinalVerdict
+    WrongAnswer --&gt; FinalVerdict
+    Accepted --&gt; FinalVerdict
+
+    FinalVerdict --&gt; [*]: Update DB &amp; Notify User</code></pre>
+<hr>
+<h2>9. Role-Based Access Control (RBAC) Flowchart</h2>
+<pre><code>flowchart TD
+    Start([Incoming HTTP Request]) --&gt; CheckAuth{Is Bearer JWT Token Present?}
+    CheckAuth -- No --&gt; Reject401[Return 401 Unauthorized]
+    CheckAuth -- Yes --&gt; VerifyJWT{Is JWT Valid &amp; Unexpired?}
+    VerifyJWT -- Invalid --&gt; Reject401
+    VerifyJWT -- Valid --&gt; ExtractRole[Extract User Role from Token]
+
+    ExtractRole --&gt; CheckRoute{Is Endpoint Admin-Only?}
+    CheckRoute -- No --&gt; AllowUser[Allow Access: Proceed to Controller]
+    CheckRoute -- Yes --&gt; CheckAdmin{Is Role == 'Admin'?}
+    CheckAdmin -- No --&gt; Reject403[Return 403 Forbidden: Insufficient Rights]
+    CheckAdmin -- Yes --&gt; AllowAdmin[Allow Access: Proceed to Admin Controller]</code></pre>
+<hr>
+<h2>10. Docker Sandbox Security & Isolation Architecture</h2>
+<pre><code>graph TD
+    subgraph Host System Environment
+        HostKernel[Linux OS Kernel v6.x]
+
+        subgraph Docker Daemon Security Boundary
+            subgraph Container Isolation Boundary
+                Proc[User Code Execution Process UID 10001]
+                CGroups[Linux cgroups v2: RAM 256MB / CPU 1.0 / PIDs 64]
+                Seccomp[Seccomp Syscall Filter: Block sys_execve / sys_socket]
+                Net[Network Namespace: Unlinked --network none]
+                Mount[Mount Namespace: Read-Only Volume /sandbox:ro]
+            end
+        end
+    end
+
+    HostKernel --- CGroups
+    HostKernel --- Seccomp
+    HostKernel --- Net
+    HostKernel --- Mount
+
+    Proc --&gt; CGroups
+    Proc --&gt; Seccomp
+    Proc --&gt; Net
+    Proc --&gt; Mount</code></pre>
+<hr>
+<h2>11. CI/CD Deployment Pipeline Flowchart</h2>
+<pre><code>flowchart LR
+    Dev([Developer Push Code]) --&gt; GitHub[GitHub Repository]
+    GitHub --&gt; Action[Trigger GitHub Actions]
+
+    subgraph CI Pipeline Execution
+        Action --&gt; Lint[ESLint &amp; Prettier Checks]
+        Lint --&gt; Test[Run Jest Unit &amp; Integration Tests]
+        Test --&gt; Security[Run Security Audit &amp; Vulnerability Scan]
+    end
+
+    Security --&gt; Build[Build Production Docker Images]
+    Build --&gt; ECR[Push to Container Registry]
+
+    subgraph CD Continuous Deployment
+        ECR --&gt; K8s[Kubernetes Cluster Rolling Upgrade]
+        K8s --&gt; HealthCheck{Health Check Probe OK?}
+        HealthCheck -- Failed --&gt; Rollback[Trigger Automated Rollback]
+        HealthCheck -- Success --&gt; Finish([Deployment Live])
+    end</code></pre>
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>4_API_Documentation.md</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 20pt; color: #0052cc; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 25px; }
+        h2 { font-size: 14pt; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 4px; margin-top: 20px; }
+        h3 { font-size: 12pt; color: #2b6cb0; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9.5pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #cbd5e0; padding: 7px 10px; text-align: left; }
+        th { background-color: #ebf8ff; color: #2b6cb0; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+        pre { background-color: #1a202c; color: #f7fafc; padding: 12px; border-radius: 6px; font-size: 9pt; white-space: pre-wrap; word-break: break-all; margin: 12px 0; page-break-inside: avoid; }
+        code { background-color: #edf2f7; color: #c53030; padding: 2px 5px; border-radius: 4px; font-size: 9pt; }
+        pre code { background-color: transparent; color: inherit; padding: 0; }
+        .alert { background-color: #f7fafc; border-left: 4px solid #3182ce; padding: 10px 14px; margin: 14px 0; border-radius: 0 4px 4px 0; font-size: 9.5pt; }
+        .alert-title { font-weight: bold; color: #2b6cb0; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 30px; border-bottom: 3px solid #0052cc; padding-bottom: 10px;">
+        <div style="font-size: 22pt; font-weight: bold; color: #0052cc;">Online Judge Platform</div>
+        <div style="font-size: 12pt; color: #4a5568;">Prepared By: Kuswanth Tumma</div>
+    </div>
+    <h1>REST API Documentation Specification</h1>
+<h2>Online Judge Platform — OpenAPI 3.0 Specification</h2>
+<hr>
+<p>| Document Metadata | Details |</p>
+<p>| :--- | :--- |</p>
+<p>| <strong>Project Title</strong> | Online Judge Platform |</p>
+<p>| <strong>API Version</strong> | v1.0.0 |</p>
+<p>| <strong>Base URL</strong> | <code>https://api.onlinejudge.com/api/v1</code> |</p>
+<p>| <strong>Authentication Scheme</strong> | Bearer Token (JSON Web Token) |</p>
+<p>| <strong>Format</strong> | JSON (<code>application/json</code>) |</p>
+<p>| <strong>Author</strong> | <strong>Kuswanth Tumma</strong> |</p>
+<p>| <strong>Date</strong> | July 2026 |</p>
+<hr>
+<h2>1. Global Standard Responses & Headers</h2>
+<h3>Request Headers</h3>
+<li><code>Content-Type: application/json</code></li>
+<li><code>Authorization: Bearer <JWT_ACCESS_TOKEN></code></li>
+<h3>Standard Error Response Format</h3>
+<pre><code>{
+  "success": false,
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "The requested problem with ID 64b8f... does not exist.",
+    "timestamp": "2026-07-26T20:00:00.000Z"
+  }
+}</code></pre>
+<hr>
+<h2>2. Authentication Endpoints</h2>
+<h3>2.1 Register New User</h3>
+<li><strong>Endpoint</strong>: <code>POST /auth/signup</code></li>
+<li><strong>Access</strong>: Public</li>
+<li><strong>Description</strong>: Registers a new regular user account.</li>
+<h4>Request Body</h4>
+<pre><code>{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "password": "SecurePassword123!"
+}</code></pre>
+<h4>Response (201 Created)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "64b8f9e210a1b2001c8e4321",
+      "name": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "role": "User"
+    }
+  }
+}</code></pre>
+<hr>
+<h3>2.2 User Login</h3>
+<li><strong>Endpoint</strong>: <code>POST /auth/login</code></li>
+<li><strong>Access</strong>: Public</li>
+<li><strong>Description</strong>: Authenticates user credentials and returns a JWT access token.</li>
+<h4>Request Body</h4>
+<pre><code>{
+  "email": "jane.doe@example.com",
+  "password": "SecurePassword123!"
+}</code></pre>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NGI4ZjllMjEwYTFiMjAwMWM4ZTQzMjEiLCJyb2xlIjoiVXNlciIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxNzAwMDg2NDAwfQ...",
+    "user": {
+      "id": "64b8f9e210a1b2001c8e4321",
+      "name": "Jane Doe",
+      "email": "jane.doe@example.com",
+      "role": "User"
+    }
+  }
+}</code></pre>
+<hr>
+<h3>2.3 Get Current User Profile</h3>
+<li><strong>Endpoint</strong>: <code>GET /auth/profile</code></li>
+<li><strong>Access</strong>: Authenticated (<code>User</code> / <code>Admin</code>)</li>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "id": "64b8f9e210a1b2001c8e4321",
+    "name": "Jane Doe",
+    "email": "jane.doe@example.com",
+    "role": "User",
+    "problemsSolved": 42,
+    "totalSubmissions": 98,
+    "createdAt": "2026-05-10T12:00:00.000Z"
+  }
+}</code></pre>
+<hr>
+<h2>3. Problem Management Endpoints</h2>
+<h3>3.1 List All Problems</h3>
+<li><strong>Endpoint</strong>: <code>GET /problems</code></li>
+<li><strong>Access</strong>: Public</li>
+<li><strong>Query Parameters</strong>:</li>
+<p>  - <code>page</code> (default: 1)</p>
+<p>  - <code>limit</code> (default: 20)</p>
+<p>  - <code>difficulty</code> (<code>Easy</code> | <code>Medium</code> | <code>Hard</code>)</p>
+<p>  - <code>search</code> (keyword string)</p>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "meta": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 8
+  },
+  "data": [
+    {
+      "id": "64b8f9e210a1b2001c8e9999",
+      "title": "Two Sum",
+      "slug": "two-sum",
+      "difficulty": "Easy",
+      "constraints": {
+        "timeLimitMs": 1000,
+        "memoryLimitMb": 256
+      }
+    }
+  ]
+}</code></pre>
+<hr>
+<h3>3.2 Get Problem Details</h3>
+<li><strong>Endpoint</strong>: <code>GET /problems/:id</code></li>
+<li><strong>Access</strong>: Public</li>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "id": "64b8f9e210a1b2001c8e9999",
+    "title": "Two Sum",
+    "slug": "two-sum",
+    "statement": "Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to target.",
+    "difficulty": "Easy",
+    "constraints": {
+      "timeLimitMs": 1000,
+      "memoryLimitMb": 256
+    },
+    "sampleInput": "[2, 7, 11, 15]\n9",
+    "sampleOutput": "[0, 1]"
+  }
+}</code></pre>
+<hr>
+<h3>3.3 Create New Problem (Admin Only)</h3>
+<li><strong>Endpoint</strong>: <code>POST /problems</code></li>
+<li><strong>Access</strong>: Authenticated (<code>Admin</code>)</li>
+<h4>Request Body</h4>
+<pre><code>{
+  "title": "Reverse Linked List",
+  "statement": "Given the head of a singly linked list, reverse the list, and return the reversed list.",
+  "difficulty": "Easy",
+  "constraints": {
+    "timeLimitMs": 1000,
+    "memoryLimitMb": 256
+  },
+  "sampleInput": "[1, 2, 3, 4, 5]",
+  "sampleOutput": "[5, 4, 3, 2, 1]"
+}</code></pre>
+<h4>Response (201 Created)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "id": "64b8f9e210a1b2001c8e8888",
+    "title": "Reverse Linked List",
+    "slug": "reverse-linked-list",
+    "createdBy": "64b8f9e210a1b2001c8e4321",
+    "createdAt": "2026-07-26T20:30:00.000Z"
+  }
+}</code></pre>
+<hr>
+<h2>4. Test Case Management Endpoints (Admin Only)</h2>
+<h3>4.1 Create Test Case for Problem</h3>
+<li><strong>Endpoint</strong>: <code>POST /testcases</code></li>
+<li><strong>Access</strong>: Authenticated (<code>Admin</code>)</li>
+<h4>Request Body</h4>
+<pre><code>{
+  "problemId": "64b8f9e210a1b2001c8e9999",
+  "input": "4\n2 7 11 15\n9",
+  "expectedOutput": "0 1",
+  "isHidden": true
+}</code></pre>
+<h4>Response (201 Created)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "id": "64b8f9e210a1b2001c8e7777",
+    "problemId": "64b8f9e210a1b2001c8e9999",
+    "isHidden": true
+  }
+}</code></pre>
+<hr>
+<h2>5. Submissions Endpoints</h2>
+<h3>5.1 Submit Code Solution</h3>
+<li><strong>Endpoint</strong>: <code>POST /submissions</code></li>
+<li><strong>Access</strong>: Authenticated (<code>User</code> / <code>Admin</code>)</li>
+<h4>Request Body</h4>
+<pre><code>{
+  "problemId": "64b8f9e210a1b2001c8e9999",
+  "language": "cpp",
+  "sourceCode": "#include &lt;iostream&gt;\nusing namespace std;\nint main() {\n    int n; if(!(cin &gt;&gt; n)) return 0;\n    int a[100]; for(int i=0;i&lt;n;i++) cin &gt;&gt; a[i];\n    int target; cin &gt;&gt; target;\n    for(int i=0;i&lt;n;i++){\n        for(int j=i+1;j&lt;n;j++){\n            if(a[i]+a[j]==target){\n                cout &lt;&lt; i &lt;&lt; \" \" &lt;&lt; j &lt;&lt; endl;\n                return 0;\n            }\n        }\n    }\n    return 0;\n}"
+}</code></pre>
+<h4>Response (202 Accepted for Processing)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "submissionId": "64b8f9e210a1b2001c8e5555",
+    "status": "Pending",
+    "message": "Submission enqueued successfully for evaluation."
+  }
+}</code></pre>
+<hr>
+<h3>5.2 Poll Submission Status & Verdict</h3>
+<li><strong>Endpoint</strong>: <code>GET /submissions/:id</code></li>
+<li><strong>Access</strong>: Authenticated (<code>User</code> / <code>Admin</code>)</li>
+<h4>Response (200 OK - Processing Complete)</h4>
+<pre><code>{
+  "success": true,
+  "data": {
+    "id": "64b8f9e210a1b2001c8e5555",
+    "problemId": "64b8f9e210a1b2001c8e9999",
+    "language": "cpp",
+    "verdict": "Accepted",
+    "executionTimeMs": 14,
+    "memoryUsedKb": 3480,
+    "submittedAt": "2026-07-26T20:40:00.000Z"
+  }
+}</code></pre>
+<hr>
+<h3>5.3 Get User Submission History</h3>
+<li><strong>Endpoint</strong>: <code>GET /submissions/history</code></li>
+<li><strong>Access</strong>: Authenticated (<code>User</code> / <code>Admin</code>)</li>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "data": [
+    {
+      "id": "64b8f9e210a1b2001c8e5555",
+      "problemTitle": "Two Sum",
+      "language": "cpp",
+      "verdict": "Accepted",
+      "executionTimeMs": 14,
+      "submittedAt": "2026-07-26T20:40:00.000Z"
+    }
+  ]
+}</code></pre>
+<hr>
+<h2>6. Leaderboard Endpoints</h2>
+<h3>6.1 Get Global Leaderboard</h3>
+<li><strong>Endpoint</strong>: <code>GET /leaderboard</code></li>
+<li><strong>Access</strong>: Public</li>
+<h4>Response (200 OK)</h4>
+<pre><code>{
+  "success": true,
+  "data": [
+    {
+      "rank": 1,
+      "userName": "Alex Mercer",
+      "problemsSolved": 128,
+      "totalSubmissions": 142,
+      "accuracy": 90.14
+    },
+    {
+      "rank": 2,
+      "userName": "Jane Doe",
+      "problemsSolved": 42,
+      "totalSubmissions": 98,
+      "accuracy": 42.85
+    }
+  ]
+}</code></pre>
+</body>
+</html>
